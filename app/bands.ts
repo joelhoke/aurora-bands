@@ -98,6 +98,57 @@ export function simplify(points: Point[], distance = 45): Point[] {
   if(points.length>1 && Math.hypot(points.at(-1)!.x-result.at(-1)!.x,points.at(-1)!.y-result.at(-1)!.y)>1) result.push(points[points.length-1]);
   return result;
 }
+/** Equal-distance sampling makes smoothing independent of pointer event density. */
+function resampleStroke(points: Point[], spacing: number, maxPoints: number): Point[] {
+  if(points.length<2)return points.map(({x,y})=>({x,y}));
+  const distances=[0];
+  for(let i=1;i<points.length;i++)distances.push(distances[i-1]+Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y));
+  const total=distances.at(-1)!;
+  if(total<.001)return [{x:points[0].x,y:points[0].y}];
+  const count=Math.max(2,Math.min(maxPoints,Math.ceil(total/spacing)+1));
+  const result:Point[]=[];let segment=1;
+  for(let i=0;i<count;i++){
+    const distance=total*i/(count-1);
+    while(segment<points.length-1&&distances[segment]<distance)segment++;
+    const a=points[segment-1],b=points[segment];
+    const t=(distance-distances[segment-1])/(distances[segment]-distances[segment-1]||1);
+    result.push({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+  }
+  result[0]={x:points[0].x,y:points[0].y};
+  result[result.length-1]={x:points.at(-1)!.x,y:points.at(-1)!.y};
+  return result;
+}
+
+/** Remove hand jitter, retain broad wave shapes, and keep both endpoints fixed. */
+export function smoothStroke(points: Point[]): Point[] {
+  const clean:Point[]=[];
+  for(const {x,y} of points){
+    const last=clean.at(-1);
+    if(!last||Math.hypot(x-last.x,y-last.y)>.001)clean.push({x,y});
+  }
+  if(clean.length<=2)return clean;
+  const uniform=resampleStroke(clean,6,1600);
+  let length=0;for(let i=1;i<uniform.length;i++)length+=Math.hypot(uniform[i].x-uniform[i-1].x,uniform[i].y-uniform[i-1].y);
+  const step=length/(uniform.length-1)||1;
+  const sigma=16/step, radius=Math.min(uniform.length-1,Math.ceil(sigma*3));
+  // Reflect around the endpoints so smoothing does not pull them inward.
+  const at=(index:number):Point=>{
+    if(index<0){const p=uniform[-index],a=uniform[0];return {x:2*a.x-p.x,y:2*a.y-p.y};}
+    if(index>=uniform.length){const p=uniform[2*(uniform.length-1)-index],a=uniform.at(-1)!;return {x:2*a.x-p.x,y:2*a.y-p.y};}
+    return uniform[index];
+  };
+  const weights=Array.from({length:2*radius+1},(_,j)=>Math.exp(-.5*((j-radius)/sigma)**2));
+  const total=weights.reduce((a,b)=>a+b,0);
+  const filtered=uniform.map((p,i)=>{
+    if(i===0||i===uniform.length-1)return {...p};
+    let x=0,y=0;
+    for(let j=-radius;j<=radius;j++){const q=at(i+j),weight=weights[j+radius];x+=q.x*weight;y+=q.y*weight;}
+    return {x:x/total,y:y/total};
+  });
+  // Fewer, evenly spaced anchors yield gentle cubic transitions and stay editable.
+  return resampleStroke(filtered,28,240);
+}
+
 export function validateScene(value: unknown): value is Scene {
   if(!value || typeof value!=='object') return false;
   const s=value as Scene, hex=/^#[0-9a-f]{6}$/i;

@@ -9,7 +9,7 @@ Use Node 22.13 or newer. Install dependencies with `npm install`, then run `npm 
 ## Make a band
 
 - **Pen (P):** click to place anchors; drag while placing an anchor to create a mirrored Bézier handle. Press Enter or Finish path to complete. Escape cancels the draft.
-- **Draw (B):** draw a stroke and release. Closely spaced points are simplified into a smooth curve.
+- **Draw (B):** draw a stroke and release. Natural smoothing filters hand jitter in the live preview and finished wave, preserving both endpoints. Equal-distance sampling keeps the result consistent across drawing speeds. Use **Smooth path** in the properties panel to soften an existing path; Undo restores the original.
 - **Coordinates:** use the code icon to create a band, or Edit path coordinates for the selected band. Enter one `x, y` pair per line. The canvas is 1200 × 800; (0, 0) is top left. Off-canvas points are allowed.
 - **Select (V):** click a band to reveal its path. Click an anchor to select it (filled pink), or drag anchors and visible handles to reshape. Editing pauses motion and resets the preview to its base shape.
 - **Delete:** click a band or point, then press Delete/Backspace or click the contextual trash button. A path with only two points is removed if either point is deleted. Undo restores deleted paths and points. Click empty canvas to deselect. Backspace removes the last point of an unfinished pen path.
@@ -49,4 +49,4 @@ For example, change `makeBand` width from 150 to 220 for broader new strokes. Pr
 
 ## Verification
 
-`node --test tests/bands.test.mjs` runs the seven geometry/data tests. `node node_modules/typescript/bin/tsc --noEmit` checks types. Browser QA covered pen handles, freehand creation, valid/invalid coordinates, undo/redo, hex colors, PNG export, desktop layout, and a 390 px mobile viewport without horizontal overflow. The browser console was free of errors during this pass.
+`node --test tests/bands.test.mjs` runs geometry/data and smoothing regression tests. `node node_modules/typescript/bin/tsc --noEmit` checks types. Browser QA covered pen handles, freehand creation, valid/invalid coordinates, undo/redo, hex colors, PNG export, desktop layout, and a 390 px mobile viewport without horizontal overflow. The browser console was free of errors during this pass.
