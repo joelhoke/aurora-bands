@@ -11,7 +11,8 @@ Use Node 22.13 or newer. Install dependencies with `npm install`, then run `npm 
 - **Pen (P):** click to place anchors; drag while placing an anchor to create a mirrored Bézier handle. Press Enter or Finish path to complete. Escape cancels the draft.
 - **Draw (B):** draw a stroke and release. Closely spaced points are simplified into a smooth curve.
 - **Coordinates:** use the code icon to create a band, or Edit path coordinates for the selected band. Enter one `x, y` pair per line. The canvas is 1200 × 800; (0, 0) is top left. Off-canvas points are allowed.
-- **Select (V):** click a band or its layer. Enable Paths to drag anchors and visible handles. Editing pauses motion and resets the preview to its base shape.
+- **Select (V):** click a band to reveal its path. Click an anchor to select it (filled pink), or drag anchors and visible handles to reshape. Editing pauses motion and resets the preview to its base shape.
+- **Delete:** click a band or point, then press Delete/Backspace or click the contextual trash button. A path with only two points is removed if either point is deleted. Undo restores deleted paths and points. Click empty canvas to deselect. Backspace removes the last point of an unfinished pen path.
 - **Appearance:** choose Silk, Radiant, or Neon, then edit colors with the swatches or hex values. Add or reverse color stops; adjust width, glow, and opacity.
 - **Motion:** each band has independent speed and waviness. Space pauses or resumes the whole canvas.
 - **Layers:** rename, duplicate, hide, delete, or move the selected band forward. Undo/redo works within the current page session (Cmd/Ctrl Z and Shift Cmd/Ctrl Z).
