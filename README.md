@@ -9,9 +9,10 @@ Use Node 22.13 or newer. Install dependencies with `npm install`, then run `npm 
 ## Make a band
 
 - **Pen (P):** click to place anchors; drag while placing an anchor to create a mirrored Bézier handle. Press Enter or Finish path to complete. Escape cancels the draft.
-- **Draw (B):** draw a stroke and release. Natural smoothing filters hand jitter in the live preview and finished wave, preserving both endpoints. Equal-distance sampling keeps the result consistent across drawing speeds. Use **Smooth path** in the properties panel to soften an existing path; Undo restores the original.
+- **Draw (B):** draw a stroke and release. Natural smoothing filters hand jitter in the live preview and finished wave, preserving both endpoints. Equal-distance sampling keeps the result consistent across drawing speeds. Curves are fitted to a small set of Bézier anchors rather than fixed-distance points. Use **Smooth & simplify** to reduce anchors on an existing path; its toast shows the before/after count. Undo restores the original.
 - **Coordinates:** use the code icon to create a band, or Edit path coordinates for the selected band. Enter one `x, y` pair per line. The canvas is 1200 × 800; (0, 0) is top left. Off-canvas points are allowed.
-- **Select (V):** click a band to reveal its path. Click an anchor to select it (filled pink), or drag anchors and visible handles to reshape. Editing pauses motion and resets the preview to its base shape.
+- **Move paths (V):** drag a band anywhere along its visible ribbon to move the whole path, preserving every anchor and curve handle. Undo restores the full move in one step.
+- **Edit points (A):** click and drag individual anchors. Click an anchor to reveal its incoming and outgoing Bézier handles. Dragging between anchors can still move the whole path.
 - **Delete:** click a band or point, then press Delete/Backspace or click the contextual trash button. A path with only two points is removed if either point is deleted. Undo restores deleted paths and points. Click empty canvas to deselect. Backspace removes the last point of an unfinished pen path.
 - **Appearance:** choose Silk, Radiant, or Neon, then edit colors with the swatches or hex values. Add or reverse color stops; adjust width, glow, and opacity.
 - **Motion:** each band has independent speed and waviness. Space pauses or resumes the whole canvas.
@@ -31,7 +32,7 @@ The project autosaves to this browser. Export provides a 2400 × 1600 PNG of the
 | `tests/bands.test.mjs` | Geometry, motion, parsing, and import validation checks. |
 | `.openai/hosting.json` | Private Site identity and hosting configuration. |
 
-The rendering is layered Canvas 2D. Continuous strips follow each curve to create a soft cross-band profile; a longitudinal gradient supplies color, with a glow pass beneath it. Animation changes the wave displacement and color phase. Paused scenes only repaint when edited. Imported paths and scene size are bounded to avoid excessive rendering work.
+The rendering is layered Canvas 2D. The editable path follows the brightest ridge (the edge of Silk, the center of Radiant/Neon). Continuous strips follow each curve to create a soft cross-band profile; a longitudinal gradient supplies color, with a glow pass beneath it. Tight inward bends narrow gradually to prevent offset strips folding over. Animation changes the wave displacement and color phase; guides follow the visible animated ridge. Paused scenes only repaint when edited. Imported paths and scene size are bounded to avoid excessive rendering work.
 
 ## Small tuning changes
 
@@ -45,7 +46,7 @@ The rendering is layered Canvas 2D. Continuous strips follow each curve to creat
 | `--pink` in `app/globals.css` | `#b25b7c` | Primary interface accent. Companion colors are in the same file. |
 | Property sliders + `validateScene` | Width 5–400; glow/opacity/waviness 0–100; speed 0–3 | These are chosen editor limits, not mathematical limits. Update the slider and import validator together. |
 
-For example, change `makeBand` width from 150 to 220 for broader new strokes. Preset widths and already saved scenes do not change. Changing the file format, adding animation export, or changing curve interpolation deserves a coordinated implementation and validation pass.
+For example, change `makeBand` width from 150 to 220 for broader new strokes. Preset widths and already saved scenes do not change. Curve fitting uses a 4 canvas-pixel tolerance initially and increases it only if needed to respect the anchor budget. New strokes target at most 64 anchors; simple waves usually need only a handful. Incoming (`ix`, `iy`) and outgoing (`hx`, `hy`) handles are vectors relative to each anchor, so translation preserves them. Existing projects without incoming handles retain mirrored-handle behavior. Changing the file format, adding animation export, or changing curve interpolation deserves a coordinated implementation and validation pass.
 
 ## Verification
 

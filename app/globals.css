@@ -7,3 +7,5 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 
 .canvas-hint button{display:inline-flex;align-items:center;gap:5px}.path-overlay:focus{outline:none}.path-overlay:focus-visible{outline:2px solid #b25b7c;outline-offset:-2px}
+
+.tool-move .path-overlay{cursor:grab}.tool-move .path-overlay:active{cursor:grabbing}
