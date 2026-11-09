@@ -1,6 +1,8 @@
 export type Point = { x: number; y: number; hx?: number; hy?: number; ix?: number; iy?: number };
 export type Band = { id: string; name: string; points: Point[]; colors: string[]; width: number; glow: number; opacity: number; speed: number; amplitude: number; style: 'Silk' | 'Radiant' | 'Neon'; visible: boolean };
-export type Scene = { bands: Band[]; background: string; title: string };
+export type BackgroundGradient = { enabled: boolean; type: 'linear' | 'radial'; colors: string[]; angle: number };
+export type Scene = { bands: Band[]; background: string; backgroundGradient?: BackgroundGradient; title: string };
+export const defaultBackgroundGradient = (): BackgroundGradient => ({ enabled: true, type: 'linear', colors: ['#fce1dd', '#ddd8f1', '#d0edf0'], angle: 135 });
 export const W = 1200, H = 800;
 export const uid = () => Math.random().toString(36).slice(2, 10);
 export const makeBand = (points: Point[], options: Partial<Band> = {}): Band => ({ id: uid(), name: 'Untitled band', points, colors: ['#ff91a8', '#c1a5f5', '#8bd9ed'], width: 150, glow: 18, opacity: 88, speed: 0.7, amplitude: 20, style: 'Silk', visible: true, ...options });
@@ -42,9 +44,32 @@ function colorAt(colors: string[], t: number) {
   const a = rgb(colors[i]), b = rgb(colors[Math.min(i+1, colors.length-1)]);
   return a.map((n,j) => Math.round(n + (b[j]-n)*f));
 }
+/** Uses CSS angles: 0° points up, 90° right, 180° down. */
+export function backgroundEndpoints(angle: number) {
+  const radians=angle*Math.PI/180,dx=Math.sin(radians),dy=-Math.cos(radians);
+  const extent=(Math.abs(W*dx)+Math.abs(H*dy))/2;
+  return [W/2-dx*extent,H/2-dy*extent,W/2+dx*extent,H/2+dy*extent] as const;
+}
+export function paintBackground(ctx:CanvasRenderingContext2D,scene:Scene){
+  const setting=scene.backgroundGradient;
+  if(setting?.enabled){
+    const gradient=setting.type==='radial'
+      ?ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.hypot(W/2,H/2))
+      :ctx.createLinearGradient(...backgroundEndpoints(setting.angle));
+    setting.colors.forEach((color,i)=>gradient.addColorStop(i/(setting.colors.length-1),color));
+    ctx.fillStyle=gradient;
+  }else ctx.fillStyle=scene.background;
+  ctx.fillRect(0,0,W,H);
+}
+function validBackgroundGradient(value:unknown):boolean{
+  if(value===undefined)return true;
+  if(!value||typeof value!=='object')return false;
+  const g=value as BackgroundGradient;
+  return typeof g.enabled==='boolean'&&['linear','radial'].includes(g.type)&&Number.isFinite(g.angle)&&g.angle>=0&&g.angle<=360&&Array.isArray(g.colors)&&g.colors.length>=2&&g.colors.length<=5&&g.colors.every(c=>typeof c==='string'&&/^#[0-9a-f]{6}$/i.test(c));
+}
 export function renderScene(ctx: CanvasRenderingContext2D, scene: Scene, time: number, width = W, height = H) {
   ctx.clearRect(0, 0, width, height); ctx.save(); ctx.scale(width/W,height/H);
-  ctx.fillStyle = scene.background; ctx.fillRect(0,0,W,H);
+  paintBackground(ctx,scene);
   for (const band of scene.bands) {
     if (!band.visible || band.points.length < 2) continue;
     const pts = samplePath(band.points, time, band.amplitude, band.speed);
@@ -245,7 +270,7 @@ export function hitBand(band:Band,p:Point,time=0,tolerance=10):boolean{
 export function validateScene(value: unknown): value is Scene {
   if(!value || typeof value!=='object') return false;
   const s=value as Scene, hex=/^#[0-9a-f]{6}$/i;
-  return typeof s.title==='string' && s.title.length<200 && hex.test(s.background) && Array.isArray(s.bands) && s.bands.length<=40 && new Set(s.bands.map(b=>b.id)).size===s.bands.length && s.bands.every(b=>typeof b.id==='string' && typeof b.name==='string' && b.name.length<200 && typeof b.visible==='boolean' && ['Silk','Radiant','Neon'].includes(b.style) && Array.isArray(b.colors) && b.colors.length>=2 && b.colors.length<=8 && b.colors.every(c=>hex.test(c)) && Array.isArray(b.points) && b.points.length>=2 && b.points.length<=300 && b.points.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Math.abs(p.x)<10000&&Math.abs(p.y)<10000 && [p.hx,p.hy,p.ix,p.iy].every(n=>n===undefined||(Number.isFinite(n)&&Math.abs(n)<10000))) && [['width',5,400],['glow',0,100],['opacity',0,100],['speed',0,3],['amplitude',0,100]].every(([k,min,max])=>Number.isFinite(b[k as keyof Band]) && Number(b[k as keyof Band])>=Number(min) && Number(b[k as keyof Band])<=Number(max)));
+  return typeof s.title==='string' && s.title.length<200 && hex.test(s.background) && validBackgroundGradient(s.backgroundGradient) && Array.isArray(s.bands) && s.bands.length<=40 && new Set(s.bands.map(b=>b.id)).size===s.bands.length && s.bands.every(b=>typeof b.id==='string' && typeof b.name==='string' && b.name.length<200 && typeof b.visible==='boolean' && ['Silk','Radiant','Neon'].includes(b.style) && Array.isArray(b.colors) && b.colors.length>=2 && b.colors.length<=8 && b.colors.every(c=>hex.test(c)) && Array.isArray(b.points) && b.points.length>=2 && b.points.length<=300 && b.points.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Math.abs(p.x)<10000&&Math.abs(p.y)<10000 && [p.hx,p.hy,p.ix,p.iy].every(n=>n===undefined||(Number.isFinite(n)&&Math.abs(n)<10000))) && [['width',5,400],['glow',0,100],['opacity',0,100],['speed',0,3],['amplitude',0,100]].every(([k,min,max])=>Number.isFinite(b[k as keyof Band]) && Number(b[k as keyof Band])>=Number(min) && Number(b[k as keyof Band])<=Number(max)));
 }
 
 export function parseCoordinates(text: string): Point[] {

@@ -15,6 +15,7 @@ Use Node 22.13 or newer. Install dependencies with `npm install`, then run `npm 
 - **Edit points (A):** click and drag individual anchors. Click an anchor to reveal its incoming and outgoing Bézier handles. Dragging between anchors can still move the whole path.
 - **Delete:** click a band or point, then press Delete/Backspace or click the contextual trash button. A path with only two points is removed if either point is deleted. Undo restores deleted paths and points. Click empty canvas to deselect. Backspace removes the last point of an unfinished pen path.
 - **Appearance:** choose Silk, Radiant, or Neon, then edit colors with the swatches or hex values. Add or reverse color stops; adjust width, glow, and opacity.
+- **Canvas background:** choose Solid, Linear, or Radial. Gradients support 2–5 custom colors (picker or hex), reversing the color order, and a 0–360° direction for linear gradients. Radial colors run from the center outward. Switching back to Solid preserves your gradient settings. Backgrounds are included in autosave, project files, undo/redo, and PNG exports.
 - **Motion:** each band has independent speed and waviness. Space pauses or resumes the whole canvas.
 - **Layers:** rename, duplicate, hide, delete, or move the selected band forward. Undo/redo works within the current page session (Cmd/Ctrl Z and Shift Cmd/Ctrl Z).
 - **Presets:** a preset replaces the canvas. Undo restores the prior scene.

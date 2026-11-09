@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {samplePath,simplify,smoothStroke,translatePoints,ridgePosition,ribbonGeometry,hitBand,makeBand,preset,validateScene,parseCoordinates} from '../app/bands.ts';
+import {samplePath,paintBackground,backgroundEndpoints,defaultBackgroundGradient,simplify,smoothStroke,translatePoints,ridgePosition,ribbonGeometry,hitBand,makeBand,preset,validateScene,parseCoordinates} from '../app/bands.ts';
 test('all built-in studies are importable, including blank canvas',()=>{
   for(let i=0;i<6;i++)assert.ok(validateScene(preset(i)));
 });
@@ -89,4 +89,28 @@ test('independent incoming handles survive project validation and curve sampling
   const s=preset(0);s.bands[0].points=[{x:0,y:0,hx:30,hy:0},{x:100,y:0,ix:-30,iy:80}];
   assert.ok(validateScene(s));assert.ok(samplePath(s.bands[0].points).some(p=>p.y>30));
   s.bands[0].points[1].ix=Infinity;assert.equal(validateScene(s),false);
+});
+
+test('legacy solid scenes and gradient scenes round-trip through project validation',()=>{
+  const s=preset(0);assert.ok(validateScene(JSON.parse(JSON.stringify(s))));
+  for(const type of ['linear','radial']){s.backgroundGradient={...defaultBackgroundGradient(),type};assert.ok(validateScene(JSON.parse(JSON.stringify(s))));}
+  for(const change of [g=>g.angle=Infinity,g=>g.angle=-1,g=>g.type='unknown',g=>g.colors=['#ffffff'],g=>g.colors=['red','#000000'],g=>g.colors=Array(6).fill('#ffffff'),g=>g.enabled='true']){
+    s.backgroundGradient=defaultBackgroundGradient();change(s.backgroundGradient);assert.equal(validateScene(s),false);
+  }
+});
+test('background direction follows CSS angles and covers the full canvas',()=>{
+  const close=(actual,expected)=>actual.forEach((v,i)=>assert.ok(Math.abs(v-expected[i])<1e-8));
+  close(backgroundEndpoints(0),[600,800,600,0]);
+  close(backgroundEndpoints(90),[0,400,1200,400]);
+  close(backgroundEndpoints(180),[600,0,600,800]);
+  close(backgroundEndpoints(360),backgroundEndpoints(0));
+});
+test('background painter uses all colors for linear and radial exports, and retains solid color',()=>{
+  const calls=[],stops=[],gradient={addColorStop:(...args)=>stops.push(args)};
+  const ctx={fillStyle:null,createLinearGradient:(...args)=>{calls.push(['linear',...args]);return gradient;},createRadialGradient:(...args)=>{calls.push(['radial',...args]);return gradient;},fillRect:(...args)=>calls.push(['fill',...args])};
+  const s=preset(5);paintBackground(ctx,s);assert.equal(ctx.fillStyle,s.background);
+  s.backgroundGradient=defaultBackgroundGradient();paintBackground(ctx,s);
+  assert.equal(ctx.fillStyle,gradient);assert.equal(calls[1][0],'linear');assert.deepEqual(stops,[[0,'#fce1dd'],[.5,'#ddd8f1'],[1,'#d0edf0']]);
+  s.backgroundGradient.type='radial';paintBackground(ctx,s);assert.deepEqual(calls[3],['radial',600,400,0,600,400,Math.hypot(600,400)]);
+  s.backgroundGradient.enabled=false;paintBackground(ctx,s);assert.equal(ctx.fillStyle,s.background);
 });

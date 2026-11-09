@@ -9,3 +9,5 @@
 .canvas-hint button{display:inline-flex;align-items:center;gap:5px}.path-overlay:focus{outline:none}.path-overlay:focus-visible{outline:2px solid #b25b7c;outline-offset:-2px}
 
 .tool-move .path-overlay{cursor:grab}.tool-move .path-overlay:active{cursor:grabbing}
+
+.background-modes{margin-bottom:15px}.background-note{font-size:9px;color:#969d8e;line-height:1.6;margin:10px 0 0}.background-color-stops .color-stop{flex:0 1 calc((100% - 14px)/3)}
