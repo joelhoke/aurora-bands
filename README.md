@@ -2,9 +2,35 @@
 
 Draw and animate luminous gradient bands with pen anchors, freehand strokes, or x/y coordinates. The renderer draws the artwork itself; no reference images are embedded.
 
+![Aurora's luminous gradient bands](docs/media/aurora-preview.jpg)
+
+[Watch the 15-second demo reel](docs/media/aurora-demo-15s.mp4) · 1080p, 30 fps
+
+The reel uses the same band renderer with enlarged demonstration controls to show drawing, color customization, and playback. It is a prepared showcase; animation recording is not built into the editor.
+
+## Features
+
+- Draw naturally smoothed waves, place Bézier anchors, or enter coordinates.
+- Select and move whole paths, reshape individual points, and undo edits.
+- Create Silk, Radiant, and Neon bands with custom colors, glow, width, and opacity.
+- Choose solid, linear-gradient, or radial-gradient backgrounds.
+- Animate each band with independent speed and waviness.
+- Save locally, import/export editable JSON, and export high-resolution PNGs.
+
 ## Run locally
 
-Use Node 22.13 or newer. Install dependencies with `npm install`, then run `npm run dev`. Open the local URL printed by the server. `npm run build` creates the production output.
+Use **Node.js 24 LTS** and npm. From a terminal:
+
+```sh
+git clone https://github.com/joelhoke/aurora-bands.git
+cd aurora-bands
+npm ci
+npm run dev
+```
+
+Open the local URL printed by the server (normally `http://localhost:5173`). No API keys are needed for the playground. Your artwork stays in your browser's local storage unless you export it. `npm run build` creates the production output.
+
+The app uses React, TypeScript, Canvas 2D, and Vinext/Vite. The repository includes its Sites/Cloudflare hosting scaffold. The existing `.openai/hosting.json` identifies the original hosted project; use your own hosting configuration when deploying a fork. The hosted original has its own access settings; cloning this public repository does not require access to that site.
 
 ## Make a band
 
